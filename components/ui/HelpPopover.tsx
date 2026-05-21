@@ -102,6 +102,14 @@ export function HelpPopover({ label, title, children }: HelpPopoverProps) {
         aria-label={label}
         aria-expanded={open}
         aria-controls={open ? popoverId : undefined}
+        onMouseEnter={() => {
+          window.dispatchEvent(new CustomEvent('sigap-close-help-popovers', { detail: { sourceId: popoverId } }));
+          setOpen(true);
+        }}
+        onFocus={() => {
+          window.dispatchEvent(new CustomEvent('sigap-close-help-popovers', { detail: { sourceId: popoverId } }));
+          setOpen(true);
+        }}
         onClick={() => {
           window.dispatchEvent(new CustomEvent('sigap-close-help-popovers', { detail: { sourceId: popoverId } }));
           setOpen((current) => !current);
