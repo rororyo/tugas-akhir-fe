@@ -16,18 +16,18 @@ export const DETECTION_FEATURES = [
 
 // Values from actual training dataset
 export const MERCHANT_CATEGORIES = [
-  { value: '',            label: 'Pilih Kategori' },
+  { value: '',            label: 'Pilih Kategori Toko' },
   { value: 'electronics', label: 'Elektronik' },
-  { value: 'travel',      label: 'Travel' },
-  { value: 'grocery',     label: 'Grocery' },
-  { value: 'gaming',      label: 'Gaming' },
+  { value: 'travel',      label: 'Travel & Tiket' },
+  { value: 'grocery',     label: 'Makanan & Kebutuhan Harian' },
+  { value: 'gaming',      label: 'Gaming & Digital' },
   { value: 'fashion',     label: 'Fashion' },
 ] as const;
 
 export const CHANNELS = [
-  { value: '',    label: 'Pilih Kanal' },
-  { value: 'web', label: 'Web' },
-  { value: 'app', label: 'App' },
+  { value: '',    label: 'Pilih Channel Penjualan' },
+  { value: 'web', label: 'Marketplace via Website' },
+  { value: 'app', label: 'Aplikasi Marketplace' },
 ] as const;
 
 // country / bin_country values from training dataset

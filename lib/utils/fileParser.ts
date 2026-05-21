@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx';
 
-export async function parseCSV(file: File): Promise<any[]> {
+export async function parseCSV(file: File): Promise<Record<string, unknown>[]> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
@@ -16,7 +16,7 @@ export async function parseCSV(file: File): Promise<any[]> {
         
         // Parse headers
         const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-        const data = [];
+        const data: Record<string, unknown>[] = [];
         
         for (let i = 1; i < lines.length; i++) {
           const line = lines[i].trim();
@@ -24,7 +24,7 @@ export async function parseCSV(file: File): Promise<any[]> {
           
           // Simple CSV parsing (doesn't handle quoted commas perfectly)
           const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
-          const row: any = {};
+          const row: Record<string, unknown> = {};
           
           headers.forEach((header, index) => {
             const value = values[index] || '';
@@ -47,7 +47,7 @@ export async function parseCSV(file: File): Promise<any[]> {
   });
 }
 
-export async function parseExcel(file: File): Promise<any[]> {
+export async function parseExcel(file: File): Promise<Record<string, unknown>[]> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
@@ -61,7 +61,7 @@ export async function parseExcel(file: File): Promise<any[]> {
         const sheet = workbook.Sheets[sheetName];
         
         // Convert to JSON
-        const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' });
         
         if (jsonData.length === 0) {
           reject(new Error('File Excel kosong'));
@@ -79,7 +79,7 @@ export async function parseExcel(file: File): Promise<any[]> {
   });
 }
 
-export async function parseFile(file: File): Promise<any[]> {
+export async function parseFile(file: File): Promise<Record<string, unknown>[]> {
   const extension = file.name.split('.').pop()?.toLowerCase();
   
   if (extension === 'csv') {
@@ -87,6 +87,6 @@ export async function parseFile(file: File): Promise<any[]> {
   } else if (extension === 'xlsx' || extension === 'xls') {
     return parseExcel(file);
   } else {
-    throw new Error('Format file tidak didukung. Gunakan CSV atau XLSX');
+    throw new Error('Format file tidak didukung. Gunakan CSV, XLSX, atau XLS');
   }
 }

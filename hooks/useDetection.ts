@@ -1,8 +1,9 @@
 'use client';
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
-import type { DetectionResult, SelectedFeatures, InputMethod, Transaction, FormData } from '@/types';
+import type { DetectionResult, SelectedFeatures, InputMethod, Transaction, FormData, SingleResult } from '@/types';
 import { parseFile } from '@/lib/utils/fileParser';
+import { useToast } from '@/components/ui/ToastProvider';
 
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -14,10 +15,11 @@ const NUMERIC_COLS = [
 ];
 
 export function useDetection() {
+  const { toast } = useToast();
   const [results, setResults] = useState<DetectionResult | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [parsedData, setParsedData] = useState<any[] | null>(null);
-  const [inputMethod, setInputMethod] = useState<InputMethod>('file');
+  const [parsedData, setParsedData] = useState<Record<string, unknown>[] | null>(null);
+  const [inputMethod, setInputMethod] = useState<InputMethod>('form');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,15 +61,45 @@ export function useDetection() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploadedFile(file);
+
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    const isSupportedFile = extension === 'csv' || extension === 'xlsx' || extension === 'xls';
+
+    if (!isSupportedFile) {
+      e.currentTarget.value = '';
+      setUploadedFile(null);
+      setParsedData(null);
+      setError(null);
+      toast({
+        type: 'error',
+        title: 'Format file tidak didukung',
+        description: 'Unggah file dengan format CSV atau XLSX.',
+      });
+      return;
+    }
+
     setError(null);
     try {
       setIsLoading(true);
       const data = await parseFile(file);
+      setUploadedFile(file);
       setParsedData(data);
+      toast({
+        type: 'success',
+        title: 'File berhasil dibaca',
+        description: `${data.length} transaksi siap dianalisis.`,
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal memproses file');
+      const message = err instanceof Error ? err.message : 'Gagal memproses file';
+      e.currentTarget.value = '';
+      setUploadedFile(null);
       setParsedData(null);
+      setError(message);
+      toast({
+        type: 'error',
+        title: 'Gagal memproses file',
+        description: message,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -89,15 +121,25 @@ export function useDetection() {
           throw new Error('Tidak ada data untuk diproses');
         }
 
-        const transactions: Transaction[] = parsedData.map((row: any) => {
-          const tx: any = { ...row };
-          delete tx['is_fraud'];
+        const REQUIRED_UPLOAD = new Set(['user_id', 'amount', 'merchant_category']);
+        const allowedCols = new Set<string>(REQUIRED_UPLOAD);
+        (Object.entries(selectedFeatures) as [string, boolean][]).forEach(([key, enabled]) => {
+          if (enabled) allowedCols.add(key);
+        });
+
+        const transactions: Transaction[] = parsedData.map((row) => {
+          const tx: Record<string, unknown> = {};
+          for (const [k, v] of Object.entries(row)) {
+            if (k === 'is_fraud') continue;
+            if (!allowedCols.has(k)) continue; // strip deselected feature columns
+            tx[k] = v;
+          }
           for (const col of NUMERIC_COLS) {
             if (tx[col] !== undefined && tx[col] !== '') {
               tx[col] = Number(tx[col]);
             }
           }
-          return tx as Transaction;
+          return tx as unknown as Transaction;
         });
 
         response = await fetch(`${API_URL}/predict`, {
@@ -107,7 +149,7 @@ export function useDetection() {
         });
       } else {
         // Singular form — POST to /api/predict/single
-        const body: any = {
+        const body: Transaction = {
           transaction_time: formData.transaction_time || new Date().toISOString(),
           amount:            Number(formData.amount),
           merchant_category: formData.merchant_category,
@@ -131,8 +173,9 @@ export function useDetection() {
       }
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `API Error: ${response.statusText}`);
+        const errorData = await response.json().catch((): Record<string, unknown> => ({}));
+        const apiMessage = typeof errorData.error === 'string' ? errorData.error : `API Error: ${response.statusText}`;
+        throw new Error(apiMessage);
       }
 
       const data = await response.json();
@@ -143,10 +186,20 @@ export function useDetection() {
         : data as DetectionResult;
 
       setResults(result);
+      toast({
+        type: 'success',
+        title: 'Deteksi selesai',
+        description: `${result.batch_summary.processed} transaksi berhasil diproses.`,
+      });
       return result;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Gagal melakukan deteksi';
       setError(message);
+      toast({
+        type: 'error',
+        title: 'Deteksi gagal',
+        description: message,
+      });
       throw err;
     } finally {
       setIsLoading(false);
@@ -219,6 +272,11 @@ export function useDetection() {
 
     if (format === 'csv') {
       _downloadSheet(dataRows, 'template_transaksi.csv', 'csv');
+      toast({
+        type: 'success',
+        title: 'Template CSV diunduh',
+        description: 'Template transaksi siap diisi.',
+      });
       return;
     }
 
@@ -284,16 +342,32 @@ export function useDetection() {
     ]), 'Country & BIN Country');
 
     XLSX.writeFile(wb, 'template_transaksi.xlsx');
+    toast({
+      type: 'success',
+      title: 'Template XLSX diunduh',
+      description: 'Template transaksi siap diisi.',
+    });
   };
 
   const downloadResults = (format: 'csv' | 'xlsx') => {
-    if (!results) return;
+    if (!results) {
+      toast({
+        type: 'error',
+        title: 'Belum ada hasil',
+        description: 'Jalankan deteksi sebelum mengunduh hasil.',
+      });
+      return;
+    }
 
     const rows = results.predictions.map((p, i) => {
       // Merge original input row (by position) with prediction columns
-      const input: any = parsedData?.[i] ?? {};
+      const input = parsedData?.[i] ?? {};
       // Strip prediction columns and transaction_id that may have come from the file
-      const { is_fraud: _a, fraud_probability: _b, risk_level: _c, confidence: _d, transaction_id: _e, ...inputCols } = input;
+      const inputCols = Object.fromEntries(
+        Object.entries(input).filter(([key]) => (
+          !['is_fraud', 'fraud_probability', 'risk_level', 'confidence', 'transaction_id'].includes(key)
+        ))
+      );
       return {
         ...inputCols,
         is_fraud:          p.is_fraud ? 'Yes' : 'No',
@@ -304,6 +378,11 @@ export function useDetection() {
     });
 
     _downloadSheet(rows, `hasil_deteksi_${Date.now()}.${format}`, format);
+    toast({
+      type: 'success',
+      title: 'Hasil diunduh',
+      description: `File ${format.toUpperCase()} berhasil dibuat.`,
+    });
   };
 
   const resetDetection = () => {
@@ -325,6 +404,11 @@ export function useDetection() {
       country: 'US',
       bin_country: 'US',
       transaction_time: new Date().toISOString().slice(0, 16),
+    });
+    toast({
+      type: 'info',
+      title: 'Form deteksi direset',
+      description: 'Silakan mulai analisis transaksi baru.',
     });
   };
 
@@ -360,7 +444,7 @@ function _downloadSheet(rows: Record<string, unknown>[], filename: string, forma
 }
 
 // Convert /api/predict/single response to DetectionResult shape
-function _singleToDetectionResult(single: any): DetectionResult {
+function _singleToDetectionResult(single: SingleResult): DetectionResult {
   const pred = {
     transaction_id:    single.transaction_id,
     user_id:           single.user_id,

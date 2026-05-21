@@ -9,6 +9,7 @@ export function ContributorSection() {
       <section
         id="contributors"
         ref={ref}
+        className="contributors-section"
         style={{
           backgroundColor: '#ffffff',
           padding: '120px 80px 100px',
@@ -43,6 +44,69 @@ export function ContributorSection() {
             background-color: #eff6ff !important;
             transform: rotate(3deg);
           }
+          .contributors-section {
+            background-color: #ffffff;
+            padding: 120px 80px 100px;
+            font-family: 'Inter', sans-serif;
+          }
+          .contributors-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 32px;
+          }
+          .contributors-footer {
+            background-color: #111827;
+            padding: 40px 80px;
+            font-family: 'Inter', sans-serif;
+            text-align: center;
+          }
+          .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            border-top: 1px solid #374151;
+            padding-top: 24px;
+            flex-wrap: wrap;
+          }
+          @media (max-width: 1024px) {
+            .contributors-grid {
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+              gap: 24px;
+            }
+          }
+          @media (max-width: 700px) {
+            .contributors-section {
+              padding: 72px 16px 64px !important;
+              overflow-x: hidden;
+            }
+            .contributors-section h2 {
+              font-size: 34px !important;
+              margin-bottom: 32px !important;
+              letter-spacing: 0 !important;
+            }
+            .contributors-grid {
+              grid-template-columns: 1fr;
+              gap: 18px;
+            }
+            .contributor-card {
+              padding: 28px 22px 26px !important;
+              border-radius: 18px !important;
+            }
+            .contributor-card:hover {
+              transform: none;
+            }
+            .contributors-footer {
+              padding: 32px 16px !important;
+            }
+            .footer-links {
+              flex-direction: column;
+              align-items: center;
+              gap: 10px;
+            }
+            .footer-separator {
+              display: none;
+            }
+          }
         `}</style>
 
         <h2
@@ -59,14 +123,10 @@ export function ContributorSection() {
           Kontributor
         </h2>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '32px',
-          }}
-        >
-          {CONTRIBUTORS.map((contributor, idx) => (
+        <div className="contributors-grid">
+          {CONTRIBUTORS.map((contributor, idx) => {
+            const contributorWithNrp = contributor as typeof contributor & { nrp?: string };
+            return (
             <div
               key={idx}
               className={`contributor-reveal contributor-card ${isVisible ? 'visible' : ''}`}
@@ -112,9 +172,9 @@ export function ContributorSection() {
                 {contributor.name}
               </h3>
 
-              {(contributor as any).nrp && (
+              {contributorWithNrp.nrp && (
                 <div style={{ display: 'inline-block', backgroundColor: '#eff6ff', color: '#2563eb', padding: '4px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', marginBottom: '20px' }}>
-                  NRP: {(contributor as any).nrp}
+                  NRP: {contributorWithNrp.nrp}
                 </div>
               )}
 
@@ -137,34 +197,20 @@ export function ContributorSection() {
                 </p>
               )}
             </div>
-          ))}
+          );
+          })}
         </div>
       </section>
 
       {/* Footer */}
-      <footer
-        style={{
-          backgroundColor: '#111827',
-          padding: '40px 80px',
-          fontFamily: "'Inter', sans-serif",
-          textAlign: 'center',
-        }}
-      >
+      <footer className="contributors-footer">
         <p style={{ fontSize: '18px', fontWeight: '700', color: '#ffffff', marginBottom: '8px' }}>
           SIGAP Detection Service
         </p>
         <p style={{ fontSize: '14px', color: '#9ca3af', marginBottom: '24px' }}>
           © 2026 All Rights Reserved
         </p>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '0',
-            borderTop: '1px solid #374151',
-            paddingTop: '24px',
-          }}
-        >
+        <div className="footer-links">
           {['Contact', 'Privacy Policy', 'Terms of Service'].map((item, i) => (
             <span key={item} style={{ display: 'flex', alignItems: 'center' }}>
               <a
@@ -179,7 +225,7 @@ export function ContributorSection() {
                 {item}
               </a>
               {i < 2 && (
-                <span style={{ color: '#4b5563', fontSize: '13px' }}>|</span>
+                <span className="footer-separator" style={{ color: '#4b5563', fontSize: '13px' }}>|</span>
               )}
             </span>
           ))}

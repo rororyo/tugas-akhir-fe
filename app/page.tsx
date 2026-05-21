@@ -52,7 +52,6 @@ export default function HomePage() {
         onDetection={handleDetection}
         onDownloadTemplate={detection.downloadTemplate}
         isLoading={detection.isLoading}
-        error={detection.error}
       />
 
       {detection.results && (
