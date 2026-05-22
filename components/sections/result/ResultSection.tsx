@@ -63,7 +63,7 @@ export function ResultsSection({ results, inputMethod, onDownload, onReset }: Re
       <style>{`
         .results-stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
         .results-table-wrap { overflow-x: auto; }
-        .results-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; max-width: 900px; margin: 0 auto; }
+        .results-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
         .results-download-section {
           max-width: 980px;
           margin: 0 auto 24px;
@@ -83,6 +83,7 @@ export function ResultsSection({ results, inputMethod, onDownload, onReset }: Re
           color: #334155;
           font-size: 14px;
           line-height: 1.7;
+          margin-bottom: 18px;
         }
         .results-reset-button {
           background-color: #ffffff;
@@ -100,7 +101,7 @@ export function ResultsSection({ results, inputMethod, onDownload, onReset }: Re
           #results h2 { font-size: 34px !important; }
           .results-stat-grid { grid-template-columns: 1fr; }
           .results-download-section { padding: 16px 18px; }
-          .results-actions { grid-template-columns: 1fr; max-width: 980px; }
+          .results-actions { grid-template-columns: 1fr; }
         }
       `}</style>
 
@@ -231,20 +232,19 @@ export function ResultsSection({ results, inputMethod, onDownload, onReset }: Re
           <strong> CSV </strong>
           cocok untuk ekspor data yang lebih ringan dan sederhana.
         </p>
-      </div>
-
-      <div className="results-actions">
-        <button type="button" onClick={() => onDownload('xlsx')}
-          style={{ backgroundColor: '#16a34a', color: '#ffffff', border: 'none', borderRadius: '12px', padding: '18px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontFamily: "'Inter', sans-serif" }}>
-          <Download size={18} /> Download XLSX
-        </button>
-        <button type="button" onClick={() => onDownload('csv')}
-          style={{ backgroundColor: '#16a34a', color: '#ffffff', border: 'none', borderRadius: '12px', padding: '18px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontFamily: "'Inter', sans-serif" }}>
-          <Download size={18} /> Download CSV
-        </button>
-        <button type="button" onClick={onReset} className="results-reset-button">
-          Cek Pesanan Baru
-        </button>
+        <div className="results-actions">
+          <button type="button" onClick={() => onDownload('xlsx')}
+            style={{ backgroundColor: '#16a34a', color: '#ffffff', border: 'none', borderRadius: '12px', padding: '18px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontFamily: "'Inter', sans-serif" }}>
+            <Download size={18} /> Download XLSX
+          </button>
+          <button type="button" onClick={() => onDownload('csv')}
+            style={{ backgroundColor: '#16a34a', color: '#ffffff', border: 'none', borderRadius: '12px', padding: '18px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontFamily: "'Inter', sans-serif" }}>
+            <Download size={18} /> Download CSV
+          </button>
+          <button type="button" onClick={onReset} className="results-reset-button">
+            Cek Pesanan Baru
+          </button>
+        </div>
       </div>
     </section>
   );
