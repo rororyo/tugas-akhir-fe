@@ -346,6 +346,10 @@ function GuideModal({ open, mode, onClose }: { open: boolean; mode: InputMethod;
             <p>Pada informasi keamanan, pilihan &quot;Ya&quot; biasanya berarti pengecekan terpenuhi, sedangkan &quot;Tidak&quot; berarti belum terpenuhi atau perlu dicek ulang.</p>
           </section>
           <section>
+            <h4>Jika bingung dengan istilah</h4>
+            <p>Jika Anda belum yakin bagian atau kolom tertentu, klik ikon bantuan (?) di samping judul bagian/kolom.  Ikon ini berisi penjelasan singkat tentang bagian/kolom tersebut.</p>
+          </section>
+          <section>
             <h4>Catatan hasil AI</h4>
             <p>Hasil deteksi adalah bantuan awal. Tetap periksa ulang alamat, pembayaran, dan pola pesanan sebelum mengambil keputusan.</p>
           </section>
