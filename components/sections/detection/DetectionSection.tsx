@@ -48,7 +48,12 @@ const inputStyle = {
 
 const selectStyle = {
   ...inputStyle,
-  paddingRight: '42px',
+  paddingRight: '48px',
+  appearance: 'none' as const,
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%231f2937' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 14px center',
+  backgroundSize: '18px 18px',
 };
 
 const labelStyle = {
@@ -273,7 +278,7 @@ function FieldLabel({
           {help.text}
         </HelpPopover>
       </span>
-      <p id={`${id}-help`} style={helperTextStyle}>{help.helper}</p>
+      <p id={`${id}-help`} className="manual-field__helper" style={helperTextStyle}>{help.helper}</p>
     </>
   );
 }
@@ -592,6 +597,7 @@ export function DetectionSection({
         .manual-section__content { padding: 20px; }
         .manual-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
         .manual-field { min-width: 0; }
+        .manual-field__helper { min-height: 3.2em; }
         .manual-label-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
         .seller-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
         .seller-badge {
@@ -794,6 +800,7 @@ export function DetectionSection({
           .manual-steps { grid-template-columns: 1fr; gap: 8px; }
           .manual-step { padding: 9px 10px; }
           .manual-grid { grid-template-columns: 1fr; }
+          .manual-field__helper { min-height: 0; }
           .order-summary__grid { grid-template-columns: 1fr; }
           .manual-section__content { padding: 16px; }
           .help-popover__panel {
@@ -1149,7 +1156,7 @@ export function DetectionSection({
                           <label htmlFor={field} style={labelStyle}>{label}</label>
                           <HelpPopover label={helpLabel} title={helpTitle}>{help}</HelpPopover>
                         </span>
-                        <p id={`${field}-help`} style={helperTextStyle}>{helper}</p>
+                        <p id={`${field}-help`} className="manual-field__helper" style={helperTextStyle}>{helper}</p>
                         <select id={field} value={formData[field]} onChange={e => updateForm(field, e.target.value)} style={selectStyle} aria-describedby={describedBy(field)}>
                           {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                         </select>
@@ -1188,7 +1195,7 @@ export function DetectionSection({
                           <label htmlFor={field} style={labelStyle}>{label}</label>
                           <HelpPopover label={helpLabel} title={helpTitle}>{help}</HelpPopover>
                         </span>
-                        <p id={`${field}-help`} style={helperTextStyle}>{helper}</p>
+                        <p id={`${field}-help`} className="manual-field__helper" style={helperTextStyle}>{helper}</p>
                         <select id={field} value={formData[field]} onChange={e => updateForm(field, e.target.value)} style={selectStyle} aria-describedby={describedBy(field)}>
                           {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                         </select>
