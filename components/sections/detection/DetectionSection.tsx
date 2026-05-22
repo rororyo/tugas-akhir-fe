@@ -1224,42 +1224,76 @@ export function DetectionSection({
                 ))}
               </div>
             </div>
+
+            <div className={`manual-action-sticky animate-section ${isVisible ? 'visible' : ''}`} style={{ marginTop: '16px', animationDelay: '0.4s' }}>
+              <button
+                type="button"
+                onClick={handleDetectClick}
+                disabled={isDetectDisabled}
+                className="detect-button"
+                style={{
+                  width: '100%',
+                  backgroundColor: '#16a34a',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '16px',
+                  padding: '24px',
+                  fontSize: '20px',
+                  fontWeight: '800',
+                  cursor: isDetectDisabled ? 'not-allowed' : 'pointer',
+                  opacity: isDetectDisabled ? 0.6 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '14px',
+                  fontFamily: "'Inter', sans-serif",
+                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                }}
+              >
+                {isLoading
+                  ? <><Loader2 size={24} style={{ animation: 'spin 1s linear infinite' }} />Memproses Data...</>
+                  : <><Search size={24} />Mulai Deteksi</>
+                }
+              </button>
+            </div>
           </div>
           <GuideModal open={isGuideOpen} mode="form" onClose={() => setIsGuideOpen(false)} />
         </div>
       )}
 
-      <div className={`animate-section manual-action-sticky ${isVisible ? 'visible' : ''}`} style={{ maxWidth: '980px', margin: '0 auto', animationDelay: '0.4s' }}>
-        <button
-          type="button"
-          onClick={handleDetectClick}
-          disabled={isDetectDisabled}
-          className="detect-button"
-          style={{
-            width: '100%',
-            backgroundColor: '#16a34a',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '16px',
-            padding: '24px',
-            fontSize: '20px',
-            fontWeight: '800',
-            cursor: isDetectDisabled ? 'not-allowed' : 'pointer',
-            opacity: isDetectDisabled ? 0.6 : 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '14px',
-            fontFamily: "'Inter', sans-serif",
-            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
-          }}
-        >
-          {isLoading
-            ? <><Loader2 size={24} style={{ animation: 'spin 1s linear infinite' }} />Memproses Data...</>
-            : <><Search size={24} />Mulai Deteksi</>
-          }
-        </button>
-      </div>
+      {inputMethod === 'file' && (
+        <div className={`animate-section manual-action-sticky ${isVisible ? 'visible' : ''}`} style={{ maxWidth: '980px', margin: '0 auto', animationDelay: '0.4s' }}>
+          <button
+            type="button"
+            onClick={handleDetectClick}
+            disabled={isDetectDisabled}
+            className="detect-button"
+            style={{
+              width: '100%',
+              backgroundColor: '#16a34a',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '16px',
+              padding: '24px',
+              fontSize: '20px',
+              fontWeight: '800',
+              cursor: isDetectDisabled ? 'not-allowed' : 'pointer',
+              opacity: isDetectDisabled ? 0.6 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '14px',
+              fontFamily: "'Inter', sans-serif",
+              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+            }}
+          >
+            {isLoading
+              ? <><Loader2 size={24} style={{ animation: 'spin 1s linear infinite' }} />Memproses Data...</>
+              : <><Search size={24} />Mulai Deteksi</>
+            }
+          </button>
+        </div>
+      )}
     </section>
   );
 }
