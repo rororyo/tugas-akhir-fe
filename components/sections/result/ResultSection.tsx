@@ -64,11 +64,88 @@ export function ResultsSection({ results, inputMethod, onDownload, onReset }: Re
         .results-stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
         .results-table-wrap { overflow-x: auto; }
         .results-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; max-width: 900px; margin: 0 auto; }
+        .results-download-card {
+          max-width: 980px;
+          margin: 0 auto 24px;
+          background: linear-gradient(135deg, #ecfdf5 0%, #f8fafc 100%);
+          border: 1px solid #bbf7d0;
+          border-radius: 20px;
+          padding: 24px;
+          display: grid;
+          grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+          gap: 20px;
+          align-items: center;
+        }
+        .results-download-title {
+          margin: 0 0 8px;
+          color: #14532d;
+          font-size: 24px;
+          font-weight: 800;
+        }
+        .results-download-text {
+          margin: 0;
+          color: #334155;
+          font-size: 14px;
+          line-height: 1.7;
+        }
+        .results-download-buttons {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+        }
+        .results-download-button {
+          min-height: 88px;
+          border: none;
+          border-radius: 16px;
+          padding: 18px 16px;
+          background: #16a34a;
+          color: #ffffff;
+          cursor: pointer;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          justify-content: center;
+          gap: 6px;
+          text-align: left;
+          font-family: 'Inter', sans-serif;
+          box-shadow: 0 12px 24px rgba(22, 163, 74, 0.18);
+        }
+        .results-download-button span {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 16px;
+          font-weight: 800;
+        }
+        .results-download-button small {
+          font-size: 12px;
+          line-height: 1.5;
+          color: rgba(255, 255, 255, 0.9);
+        }
+        .results-reset-button {
+          background-color: #ffffff;
+          color: #374151;
+          border: 1px solid #d1d5db;
+          border-radius: 12px;
+          padding: 18px;
+          font-size: 15px;
+          font-weight: 700;
+          cursor: pointer;
+          font-family: 'Inter', sans-serif;
+        }
         @media (max-width: 900px) {
           #results { padding: 56px 18px 96px !important; }
           #results h2 { font-size: 34px !important; }
           .results-stat-grid { grid-template-columns: 1fr; }
-          .results-actions { grid-template-columns: 1fr; }
+          .results-download-card {
+            grid-template-columns: 1fr;
+            padding: 20px;
+          }
+          .results-download-title {
+            font-size: 22px;
+          }
+          .results-download-buttons { grid-template-columns: 1fr; }
+          .results-actions { grid-template-columns: 1fr; max-width: 980px; }
         }
       `}</style>
 
@@ -190,15 +267,31 @@ export function ResultsSection({ results, inputMethod, onDownload, onReset }: Re
         </>
       )}
 
-      <div className="results-actions">
-        {(['xlsx', 'csv'] as const).map(fmt => (
-          <button key={fmt} type="button" onClick={() => onDownload(fmt)}
-            style={{ backgroundColor: '#16a34a', color: '#ffffff', border: 'none', borderRadius: '12px', padding: '18px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontFamily: "'Inter', sans-serif" }}>
-            <Download size={18} /> Download {fmt.toUpperCase()}
+      <div className="results-download-card">
+        <div>
+          <p className="results-download-title">Download Hasil Deteksi</p>
+          <p className="results-download-text">
+            Simpan hasil pengecekan dalam format yang paling sesuai dengan kebutuhan Anda. Gunakan
+            <strong> XLSX </strong>
+            untuk spreadsheet yang siap dibuka di Excel, atau
+            <strong> CSV </strong>
+            untuk format data yang lebih ringan dan mudah diproses ulang.
+          </p>
+        </div>
+        <div className="results-download-buttons">
+          <button className="results-download-button" type="button" onClick={() => onDownload('xlsx')}>
+            <span><Download size={18} /> Download XLSX</span>
+            <small>Direkomendasikan untuk Excel dan spreadsheet dengan format tabel yang rapi.</small>
           </button>
-        ))}
-        <button type="button" onClick={onReset}
-          style={{ backgroundColor: '#ffffff', color: '#374151', border: '1px solid #d1d5db', borderRadius: '12px', padding: '18px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>
+          <button className="results-download-button" type="button" onClick={() => onDownload('csv')}>
+            <span><Download size={18} /> Download CSV</span>
+            <small>Cocok untuk ekspor data ringan, import ulang, atau pemrosesan lanjutan.</small>
+          </button>
+        </div>
+      </div>
+
+      <div className="results-actions">
+        <button type="button" onClick={onReset} className="results-reset-button">
           Cek Pesanan Baru
         </button>
       </div>

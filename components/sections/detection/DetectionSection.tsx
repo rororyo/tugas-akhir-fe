@@ -324,7 +324,7 @@ function GuideModal({ open, mode, onClose }: { open: boolean; mode: InputMethod;
             <p>
               {mode === 'file'
                 ? 'Unduh template, isi daftar pesanan sesuai kolom yang tersedia, lalu unggah file CSV atau XLSX.'
-                : 'Isi seperti saat memeriksa pesanan di marketplace: total pesanan, kategori toko, pembeli, pembayaran, keamanan, dan pengiriman.'}
+                : 'Isi seperti saat memeriksa pesanan di marketplace: total pesanan, kategori toko, pembeli, pembayaran, keamanan, dan pengiriman. Lalu, tekan tombol "Mulai Deteksi" di bagian bawah formulir untuk melihat hasil prediksi risiko.'}
             </p>
           </section>
           {mode === 'file' && (
@@ -343,6 +343,10 @@ function GuideModal({ open, mode, onClose }: { open: boolean; mode: InputMethod;
           <section>
             <h4>Catatan hasil AI</h4>
             <p>Hasil deteksi adalah bantuan awal. Tetap periksa ulang alamat, pembayaran, dan pola pesanan sebelum mengambil keputusan.</p>
+          </section>
+          <section>
+            <h4>Melihat dan mengunduh hasil</h4>
+            <p>Setelah proses deteksi selesai, hasil dapat dilihat langsung pada halaman hasil deteksi dan juga diunduh dalam format CSV atau XLSX sesuai kebutuhan.</p>
           </section>
         </div>
         <button type="button" className="guide-modal__close" onClick={onClose}>Tutup</button>
