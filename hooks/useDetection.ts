@@ -373,7 +373,7 @@ export function useDetection() {
     const rows = results.predictions.map((p, i) => {
       // Merge original input row (by position) with prediction columns
       const input = parsedData?.[i] ?? {};
-      // Strip prediction columns and transaction_id that may have come from the file
+      // Strip any prediction-side columns that came from the file
       const inputCols = Object.fromEntries(
         Object.entries(input).filter(([key]) => (
           !['is_fraud', 'fraud_probability', 'risk_level', 'confidence', 'transaction_id'].includes(key)
@@ -381,9 +381,7 @@ export function useDetection() {
       );
       return {
         ...inputCols,
-        is_fraud:          p.is_fraud ? 'Ya' : 'Tidak',
-        fraud_probability: `${Math.round(p.fraud_probability * 100)}%`,
-        status:            p.is_fraud ? 'Berisiko' : 'Aman',
+        status: p.is_fraud ? 'Berisiko' : 'Aman',
       };
     });
 
@@ -461,8 +459,6 @@ function _singleToDetectionResult(single: SingleResult): DetectionResult {
     user_id:           single.user_id,
     is_fraud:          single.is_fraud,
     fraud_probability: single.fraud_probability,
-    confidence:        single.confidence,
-    risk_level:        single.risk_level,
   };
   return {
     predictions:   [pred],

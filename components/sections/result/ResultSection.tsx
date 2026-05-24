@@ -18,8 +18,8 @@ function getSellerStatus(isFraud: boolean) {
       badge: 'Berisiko',
       color: '#dc2626',
       bg: '#fee2e2',
-      suggestion: 'Tahan proses pesanan sementara. Periksa ulang alamat, metode pembayaran, dan pola pesanan sebelum mengirim barang.',
       meaning: 'SIGAP menemukan pola yang sangat mirip dengan pesanan berisiko.',
+      suggestion: 'Tahan proses pesanan sementara. Periksa ulang alamat, metode pembayaran, dan pola pesanan sebelum mengirim barang.',
     };
   }
   return {
@@ -27,17 +27,9 @@ function getSellerStatus(isFraud: boolean) {
     badge: 'Aman',
     color: '#16a34a',
     bg: '#dcfce7',
-    suggestion: 'Pesanan terlihat aman berdasarkan data yang diisi, tetapi tetap cek detail pesanan seperti biasa.',
     meaning: 'Data pesanan tidak menunjukkan sinyal risiko yang kuat.',
+    suggestion: 'Pesanan terlihat aman berdasarkan data yang diisi, tetapi tetap cek detail pesanan seperti biasa.',
   };
-}
-
-function getFraudRiskLabel(probability: number): string {
-  if (probability <= 0.20) return 'Kemungkinan besar pesanan asli';
-  if (probability <= 0.40) return 'Kemungkinan transaksi normal';
-  if (probability <= 0.60) return 'Belum pasti — perlu diperiksa';
-  if (probability <= 0.80) return 'Mencurigakan — harap waspada';
-  return 'Risiko penipuan tinggi — jangan proses';
 }
 
 export function ResultsSection({ results, inputMethod, onDownload, onReset }: ResultsSectionProps) {
@@ -123,18 +115,10 @@ export function ResultsSection({ results, inputMethod, onDownload, onReset }: Re
         <div style={{ maxWidth: '760px', margin: '0 auto 32px', backgroundColor: '#ffffff', borderRadius: '16px', padding: '24px 28px', border: '1px solid #e5e7eb', display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
           <AlertCircle size={28} color={singleStatus.color} style={{ flex: '0 0 auto', marginTop: '2px' }} />
           <div style={{ flex: 1 }}>
-            <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 8px', fontWeight: 700 }}>Ringkasan risiko pesanan</p>
-            <span style={{ display: 'inline-flex', padding: '5px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 800, backgroundColor: singleStatus.bg, color: singleStatus.color, marginBottom: '8px' }}>
+            <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 10px', fontWeight: 700 }}>Ringkasan risiko pesanan</p>
+            <span style={{ display: 'inline-flex', padding: '6px 16px', borderRadius: '999px', fontSize: '14px', fontWeight: 800, backgroundColor: singleStatus.bg, color: singleStatus.color, marginBottom: '12px' }}>
               {singleStatus.badge}
             </span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', margin: '4px 0 10px' }}>
-              <span style={{ fontSize: '36px', fontWeight: 800, color: singleStatus.color, lineHeight: 1 }}>
-                {Math.round(pred0.fraud_probability * 100)}%
-              </span>
-              <span style={{ fontSize: '13px', color: '#6b7280', lineHeight: 1.4 }}>
-                {getFraudRiskLabel(pred0.fraud_probability)}
-              </span>
-            </div>
             <p style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 6px', color: '#111827' }}>
               {singleStatus.title}
             </p>
@@ -163,10 +147,10 @@ export function ResultsSection({ results, inputMethod, onDownload, onReset }: Re
           </div>
 
           <div className="results-table-wrap" style={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', marginBottom: '24px' }}>
-            <table style={{ width: '100%', minWidth: '900px', borderCollapse: 'collapse' }}>
+            <table style={{ width: '100%', minWidth: '760px', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ backgroundColor: '#2563EB' }}>
-                  {['#', 'ID Pembeli', 'Status', 'Risiko Penipuan', 'Arti untuk Seller', 'Saran Tindakan'].map(h => (
+                  {['#', 'ID Pembeli', 'Status', 'Arti untuk Seller', 'Saran Tindakan'].map(h => (
                     <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: '13px', fontWeight: '700', color: '#ffffff', fontFamily: "'Inter', sans-serif" }}>
                       {h}
                     </th>
@@ -188,14 +172,6 @@ export function ResultsSection({ results, inputMethod, onDownload, onReset }: Re
                       <td style={{ padding: '12px 16px' }}>
                         <span style={{ display: 'inline-block', padding: '4px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '700', backgroundColor: status.bg, color: status.color }}>
                           {status.badge}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span style={{ display: 'block', fontSize: '15px', fontWeight: 800, color: status.color }}>
-                          {Math.round(pred.fraud_probability * 100)}%
-                        </span>
-                        <span style={{ display: 'block', fontSize: '12px', color: '#6b7280', lineHeight: 1.4, marginTop: '2px' }}>
-                          {getFraudRiskLabel(pred.fraud_probability)}
                         </span>
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: '13px', color: '#374151', lineHeight: 1.55 }}>
