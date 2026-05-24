@@ -377,7 +377,8 @@ export function DetectionSection({
   const { toast } = useToast();
   const selectedCount = Object.values(selectedFeatures).filter(Boolean).length;
   const totalCount = Object.keys(selectedFeatures).length;
-  const isDetectDisabled = isLoading || (inputMethod === 'file' && (!parsedData || parsedData.length === 0));
+  const isFormIncomplete = inputMethod === 'form' && (!formData.amount || !formData.merchant_category);
+  const isDetectDisabled = isLoading || isFormIncomplete || (inputMethod === 'file' && (!parsedData || parsedData.length === 0));
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const detailSectionRef = useRef<HTMLDivElement>(null);
