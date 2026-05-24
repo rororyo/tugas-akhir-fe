@@ -1085,7 +1085,6 @@ export function DetectionSection({
 
             <div className="seller-badges" aria-label="Contoh status risiko">
               <span className="seller-badge seller-badge--safe">Aman</span>
-              <span className="seller-badge seller-badge--check">Perlu Dicek</span>
               <span className="seller-badge seller-badge--risk">Berisiko</span>
             </div>
 
@@ -1213,7 +1212,7 @@ export function DetectionSection({
             <div className="order-summary" aria-label="Ringkasan pesanan sebelum cek risiko">
               <div className="order-summary__header">
                 <p className="order-summary__title">Ringkasan Pesanan</p>
-                <span className="seller-badge seller-badge--check">Cek sebelum proses</span>
+                <span className="seller-badge seller-badge--safe">Cek sebelum proses</span>
               </div>
               <div className="order-summary__grid">
                 {orderSummary.map((item) => (

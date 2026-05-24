@@ -14,12 +14,21 @@ const NUMERIC_COLS = [
   'avs_match', 'cvv_result', 'three_ds_flag', 'promo_used', 'user_id',
 ];
 
+// All template columns — fixed regardless of feature checkbox state
+const TEMPLATE_COLUMNS = [
+  'user_id', 'amount', 'merchant_category', 'channel', 'country',
+  'bin_country', 'account_age_days', 'shipping_distance_km',
+  'promo_used', 'avs_match', 'cvv_result', 'three_ds_flag', 'transaction_time',
+];
+
 export function useDetection() {
   const { toast } = useToast();
   const [results, setResults] = useState<DetectionResult | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<Record<string, unknown>[] | null>(null);
   const [inputMethod, setInputMethod] = useState<InputMethod>('form');
+  // Locked to the mode used at submission time — never changes while results are shown
+  const [submittedInputMethod, setSubmittedInputMethod] = useState<InputMethod | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -113,6 +122,9 @@ export function useDetection() {
     setIsLoading(true);
     setError(null);
 
+    // Capture the mode at submission time before any async work
+    const modeAtSubmission = inputMethod;
+
     try {
       let response: Response;
 
@@ -121,7 +133,12 @@ export function useDetection() {
           throw new Error('Tidak ada data untuk diproses');
         }
 
+        // Required columns are always passed through
         const REQUIRED_UPLOAD = new Set(['user_id', 'amount', 'merchant_category']);
+
+        // Build the set of columns that should carry real values.
+        // Deselected feature columns are omitted entirely so the backend
+        // applies its imputation defaults for those fields.
         const allowedCols = new Set<string>(REQUIRED_UPLOAD);
         (Object.entries(selectedFeatures) as [string, boolean][]).forEach(([key, enabled]) => {
           if (enabled) allowedCols.add(key);
@@ -131,7 +148,7 @@ export function useDetection() {
           const tx: Record<string, unknown> = {};
           for (const [k, v] of Object.entries(row)) {
             if (k === 'is_fraud') continue;
-            if (!allowedCols.has(k)) continue; // strip deselected feature columns
+            if (!allowedCols.has(k)) continue; // omit → backend will impute
             tx[k] = v;
           }
           for (const col of NUMERIC_COLS) {
@@ -185,6 +202,8 @@ export function useDetection() {
         ? _singleToDetectionResult(data)
         : data as DetectionResult;
 
+      // Lock the display layout to the mode used at submission time
+      setSubmittedInputMethod(modeAtSubmission);
       setResults(result);
       toast({
         type: 'success',
@@ -207,19 +226,9 @@ export function useDetection() {
   };
 
   const downloadTemplate = (format: 'csv' | 'xlsx') => {
-    // user_id, amount, merchant_category are always present — required fields
-    // cannot be filtered out. Everything else follows selectedFeatures.
-    const REQUIRED_ALWAYS = new Set(['user_id', 'amount', 'merchant_category']);
-
-    const enabledCols = new Set<string>(REQUIRED_ALWAYS);
-    (Object.entries(selectedFeatures) as [string, boolean][]).forEach(([key, enabled]) => {
-      if (enabled) enabledCols.add(key);
-    });
-
-    // Filter a full row object down to only enabled columns
-    const filterRow = (row: Record<string, unknown>) =>
-      Object.fromEntries(Object.entries(row).filter(([k]) => enabledCols.has(k)));
-
+    // The template always contains all columns regardless of which feature
+    // checkboxes are currently selected. Feature checkboxes only control which
+    // columns are sent to the model during inference — not what appears in the template.
     const allRows = [
       {
         user_id: 1,
@@ -268,10 +277,13 @@ export function useDetection() {
       },
     ];
 
-    const dataRows = allRows.map(filterRow);
+    // Ensure column order matches TEMPLATE_COLUMNS
+    const orderedRows = allRows.map(row =>
+      Object.fromEntries(TEMPLATE_COLUMNS.map(col => [col, (row as Record<string, unknown>)[col]]))
+    );
 
     if (format === 'csv') {
-      _downloadSheet(dataRows, 'template_transaksi.csv', 'csv');
+      _downloadSheet(orderedRows, 'template_transaksi.csv', 'csv');
       toast({
         type: 'success',
         title: 'Template CSV diunduh',
@@ -280,11 +292,11 @@ export function useDetection() {
       return;
     }
 
-    // XLSX: main sheet = Data, plus one sheet per categorical column
+    // XLSX: main sheet = Data, plus reference sheets
     const wb = XLSX.utils.book_new();
 
     // Sheet 1: Data
-    const wsData = XLSX.utils.json_to_sheet(dataRows);
+    const wsData = XLSX.utils.json_to_sheet(orderedRows);
     // Bold the header row
     const range = XLSX.utils.decode_range(wsData['!ref'] ?? 'A1');
     for (let C = range.s.c; C <= range.e.c; C++) {
@@ -293,8 +305,8 @@ export function useDetection() {
     }
     XLSX.utils.book_append_sheet(wb, wsData, 'Data');
 
-    // Sheet 2: Petunjuk (field descriptions) — only for columns in this template
-    const allFieldGuide = [
+    // Sheet 2: Petunjuk (all columns — always the complete guide)
+    const fieldGuide = [
       { kolom: 'user_id',                  wajib: 'Ya',       tipe: 'Integer',  keterangan: 'ID unik pengguna (angka bulat)' },
       { kolom: 'amount',                   wajib: 'Ya',       tipe: 'Desimal',  keterangan: 'Jumlah transaksi dalam USD' },
       { kolom: 'merchant_category',        wajib: 'Ya',       tipe: 'Teks',     keterangan: 'Kategori merchant — lihat sheet Merchant Category' },
@@ -309,7 +321,6 @@ export function useDetection() {
       { kolom: 'three_ds_flag',            wajib: 'Tidak',    tipe: '0 atau 1', keterangan: 'Autentikasi 3D Secure berhasil: 1=Ya, 0=Tidak. Default: 0' },
       { kolom: 'promo_used',               wajib: 'Tidak',    tipe: '0 atau 1', keterangan: 'Menggunakan promo/diskon: 1=Ya, 0=Tidak. Default: 0' },
     ];
-    const fieldGuide = allFieldGuide.filter(r => enabledCols.has(r.kolom));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fieldGuide), 'Petunjuk Kolom');
 
     // Sheet 3: merchant_category
@@ -370,10 +381,9 @@ export function useDetection() {
       );
       return {
         ...inputCols,
-        is_fraud:          p.is_fraud ? 'Yes' : 'No',
-        fraud_probability: p.fraud_probability,
-        risk_level:        p.risk_level,
-        confidence:        p.confidence,
+        is_fraud:          p.is_fraud ? 'Ya' : 'Tidak',
+        fraud_probability: `${Math.round(p.fraud_probability * 100)}%`,
+        status:            p.is_fraud ? 'Berisiko' : 'Aman',
       };
     });
 
@@ -387,6 +397,7 @@ export function useDetection() {
 
   const resetDetection = () => {
     setResults(null);
+    setSubmittedInputMethod(null);
     setUploadedFile(null);
     setParsedData(null);
     setError(null);
@@ -413,8 +424,8 @@ export function useDetection() {
   };
 
   return {
-    results, uploadedFile, parsedData, inputMethod, selectedFeatures,
-    formData, isLoading, error,
+    results, uploadedFile, parsedData, inputMethod, submittedInputMethod,
+    selectedFeatures, formData, isLoading, error,
     setInputMethod, handleFeatureToggle, handleFileUpload, handleFormChange,
     handleDetection, downloadTemplate, downloadResults, resetDetection,
   };
