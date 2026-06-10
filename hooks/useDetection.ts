@@ -3,6 +3,7 @@ import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import type { DetectionResult, SelectedFeatures, InputMethod, Transaction, FormData, SingleResult } from '@/types';
 import { parseFile } from '@/lib/utils/fileParser';
+import { getSellerStatus } from '@/lib/utils/sellerStatus';
 import { useToast } from '@/components/ui/ToastProvider';
 
 
@@ -361,19 +362,20 @@ export function useDetection() {
 
     const rows = results.predictions.map((p, i) => {
       // Merge original input row (by position) with prediction columns
-      const input = parsedData?.[i] ?? {};
+      const input = parsedData?.[i] ?? (inputMethod === 'form' ? formData : {});
       // Strip prediction columns and transaction_id that may have come from the file
       const inputCols = Object.fromEntries(
         Object.entries(input).filter(([key]) => (
           !['is_fraud', 'fraud_probability', 'risk_level', 'confidence', 'transaction_id'].includes(key)
         ))
       );
+      const status = getSellerStatus(p.is_fraud, p.fraud_probability);
       return {
         ...inputCols,
-        is_fraud:          p.is_fraud ? 'Yes' : 'No',
-        fraud_probability: p.fraud_probability,
-        risk_level:        p.risk_level,
-        confidence:        p.confidence,
+        hasil:                status.badge,
+        confidence_score:     p.confidence,
+        arti_untuk_seller:    status.meaning,
+        saran_tindakan:       status.suggestion,
       };
     });
 
