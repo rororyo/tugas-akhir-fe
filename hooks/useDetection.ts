@@ -373,17 +373,20 @@ export function useDetection() {
 
     const rows = results.predictions.map((p, i) => {
       // Merge original input row (by position) with prediction columns
-      const input = parsedData?.[i] ?? {};
-      // Strip any prediction-side columns that came from the file
+      const input = parsedData?.[i] ?? (submittedInputMethod === 'form' ? formData : {});
+      // Keep only template columns, in template order
       const inputCols = Object.fromEntries(
-        Object.entries(input).filter(([key]) => (
-          !['is_fraud', 'fraud_probability', 'risk_level', 'confidence', 'transaction_id'].includes(key)
-        ))
+        TEMPLATE_COLUMNS
+          .filter(col => col in input)
+          .map(col => [col, (input as Record<string, unknown>)[col]])
       );
-      const status = getSellerStatus(p.is_fraud, p.fraud_probability);
+      const status = getSellerStatus(p.is_fraud);
       return {
         ...inputCols,
-        status: p.is_fraud ? 'Berisiko' : 'Aman',
+        hasil:             status.badge,
+        confidence_score:  p.fraud_probability,
+        arti_untuk_seller: status.meaning,
+        saran_tindakan:    status.suggestion,
       };
     });
 
