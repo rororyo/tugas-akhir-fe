@@ -57,7 +57,7 @@ export default function HomePage() {
       {detection.results && (
         <ResultsSection
           results={detection.results}
-          inputMethod={detection.inputMethod}
+          inputMethod={detection.submittedInputMethod ?? detection.inputMethod}
           onDownload={detection.downloadResults}
           onReset={handleReset}
         />

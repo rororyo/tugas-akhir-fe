@@ -12,6 +12,27 @@ interface ResultsSectionProps {
   onReset: () => void;
 }
 
+function getSellerStatus(isFraud: boolean) {
+  if (isFraud) {
+    return {
+      title: 'Transaksi berisiko',
+      badge: 'Berisiko',
+      color: '#dc2626',
+      bg: '#fee2e2',
+      meaning: 'SIGAP menemukan pola yang sangat mirip dengan pesanan berisiko.',
+      suggestion: 'Tahan proses pesanan sementara. Periksa ulang alamat, metode pembayaran, dan pola pesanan sebelum mengirim barang.',
+    };
+  }
+  return {
+    title: 'Transaksi terindikasi aman',
+    badge: 'Aman',
+    color: '#16a34a',
+    bg: '#dcfce7',
+    meaning: 'Data pesanan tidak menunjukkan sinyal risiko yang kuat.',
+    suggestion: 'Pesanan terlihat aman berdasarkan data yang diisi, tetapi tetap cek detail pesanan seperti biasa.',
+  };
+}
+
 export function ResultsSection({ results, inputMethod, onDownload, onReset }: ResultsSectionProps) {
   const [page, setPage] = useState(1);
   const perPage = 5;
@@ -21,7 +42,7 @@ export function ResultsSection({ results, inputMethod, onDownload, onReset }: Re
   const bs = results.batch_summary;
   const pred0 = results.predictions[0];
   const hasImputed = (results.imputed_fields?.length ?? 0) > 0;
-  const singleStatus = pred0 ? getSellerStatus(pred0.is_fraud, pred0.fraud_probability) : null;
+  const singleStatus = pred0 ? getSellerStatus(pred0.is_fraud) : null;
 
   return (
     <section
@@ -31,11 +52,44 @@ export function ResultsSection({ results, inputMethod, onDownload, onReset }: Re
       <style>{`
         .results-stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
         .results-table-wrap { overflow-x: auto; }
-        .results-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; max-width: 900px; margin: 0 auto; }
+        .results-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+        .results-download-section {
+          max-width: 980px;
+          margin: 0 auto 24px;
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
+          border-radius: 12px;
+          padding: 18px 20px;
+        }
+        .results-download-title {
+          margin: 0 0 8px;
+          color: #111827;
+          font-size: 18px;
+          font-weight: 800;
+        }
+        .results-download-text {
+          margin: 0;
+          color: #334155;
+          font-size: 14px;
+          line-height: 1.7;
+          margin-bottom: 18px;
+        }
+        .results-reset-button {
+          background-color: #ffffff;
+          color: #374151;
+          border: 1px solid #d1d5db;
+          border-radius: 12px;
+          padding: 18px;
+          font-size: 15px;
+          font-weight: 700;
+          cursor: pointer;
+          font-family: 'Inter', sans-serif;
+        }
         @media (max-width: 900px) {
           #results { padding: 56px 18px 96px !important; }
           #results h2 { font-size: 34px !important; }
           .results-stat-grid { grid-template-columns: 1fr; }
+          .results-download-section { padding: 16px 18px; }
           .results-actions { grid-template-columns: 1fr; }
         }
       `}</style>
@@ -62,8 +116,8 @@ export function ResultsSection({ results, inputMethod, onDownload, onReset }: Re
         <div style={{ maxWidth: '760px', margin: '0 auto 32px', backgroundColor: '#ffffff', borderRadius: '16px', padding: '24px 28px', border: '1px solid #e5e7eb', display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
           <AlertCircle size={28} color={singleStatus.color} style={{ flex: '0 0 auto', marginTop: '2px' }} />
           <div style={{ flex: 1 }}>
-            <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 8px', fontWeight: 700 }}>Ringkasan risiko pesanan</p>
-            <span style={{ display: 'inline-flex', padding: '5px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 800, backgroundColor: singleStatus.bg, color: singleStatus.color, marginBottom: '10px' }}>
+            <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 10px', fontWeight: 700 }}>Ringkasan risiko pesanan</p>
+            <span style={{ display: 'inline-flex', padding: '6px 16px', borderRadius: '999px', fontSize: '14px', fontWeight: 800, backgroundColor: singleStatus.bg, color: singleStatus.color, marginBottom: '12px' }}>
               {singleStatus.badge}
             </span>
             <p style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 6px', color: '#111827' }}>
@@ -83,7 +137,7 @@ export function ResultsSection({ results, inputMethod, onDownload, onReset }: Re
             {[
               { label: 'Total Pesanan', value: bs.total, border: '#2563EB' },
               { label: 'Terindikasi Aman', value: bs.processed - bs.flagged, border: '#16a34a' },
-              { label: 'Perlu Dicek', value: bs.flagged, border: '#dc2626' },
+              { label: 'Terindikasi Berisiko', value: bs.flagged, border: '#dc2626' },
               { label: 'Dilewati', value: bs.skipped, border: '#9ca3af' },
             ].map(card => (
               <div key={card.label} style={{ backgroundColor: '#ffffff', borderRadius: '12px', padding: '20px 24px', border: '1px solid #e5e7eb', borderLeft: `4px solid ${card.border}` }}>
@@ -107,7 +161,7 @@ export function ResultsSection({ results, inputMethod, onDownload, onReset }: Re
               <tbody>
                 {paginated.map((pred, idx) => {
                   const rowIdx = (page - 1) * perPage + idx;
-                  const status = getSellerStatus(pred.is_fraud, pred.fraud_probability);
+                  const status = getSellerStatus(pred.is_fraud);
                   return (
                     <tr key={idx} style={{ backgroundColor: rowIdx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
                       <td style={{ padding: '12px 16px', fontSize: '13px', color: '#374151', fontWeight: '500' }}>
@@ -158,17 +212,28 @@ export function ResultsSection({ results, inputMethod, onDownload, onReset }: Re
         </>
       )}
 
-      <div className="results-actions">
-        {(['xlsx', 'csv'] as const).map(fmt => (
-          <button key={fmt} type="button" onClick={() => onDownload(fmt)}
+      <div className="results-download-section">
+        <p className="results-download-title">Download Hasil Deteksi</p>
+        <p className="results-download-text">
+          Gunakan tombol download di bawah untuk menyimpan hasil deteksi. Format
+          <strong> XLSX </strong>
+          cocok untuk dibuka di Excel atau spreadsheet, sedangkan
+          <strong> CSV </strong>
+          cocok untuk ekspor data yang lebih ringan dan sederhana.
+        </p>
+        <div className="results-actions">
+          <button type="button" onClick={() => onDownload('xlsx')}
             style={{ backgroundColor: '#16a34a', color: '#ffffff', border: 'none', borderRadius: '12px', padding: '18px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontFamily: "'Inter', sans-serif" }}>
-            <Download size={18} /> Download {fmt.toUpperCase()}
+            <Download size={18} /> Download XLSX
           </button>
-        ))}
-        <button type="button" onClick={onReset}
-          style={{ backgroundColor: '#ffffff', color: '#374151', border: '1px solid #d1d5db', borderRadius: '12px', padding: '18px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>
-          Cek Pesanan Baru
-        </button>
+          <button type="button" onClick={() => onDownload('csv')}
+            style={{ backgroundColor: '#16a34a', color: '#ffffff', border: 'none', borderRadius: '12px', padding: '18px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontFamily: "'Inter', sans-serif" }}>
+            <Download size={18} /> Download CSV
+          </button>
+          <button type="button" onClick={onReset} className="results-reset-button">
+            Cek Pesanan Baru
+          </button>
+        </div>
       </div>
     </section>
   );

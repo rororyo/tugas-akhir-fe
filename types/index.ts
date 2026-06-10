@@ -23,8 +23,6 @@ export interface Prediction {
   user_id?: number | null;
   is_fraud: boolean;
   fraud_probability: number;
-  confidence: string;
-  risk_level: string;
 }
 
 export interface SingleResult {
@@ -33,8 +31,6 @@ export interface SingleResult {
   assigned_user_id: boolean;
   fraud_probability: number;
   is_fraud: boolean;
-  risk_level: string;
-  confidence: string;
   imputed_fields: string[];
   warning: string | null;
   model_used: string;

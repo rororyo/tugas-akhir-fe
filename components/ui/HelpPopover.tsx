@@ -11,16 +11,19 @@ interface HelpPopoverProps {
 }
 
 export function HelpPopover({ label, title, children }: HelpPopoverProps) {
-  const [open, setOpen] = useState(false);
+  const [openMode, setOpenMode] = useState<'closed' | 'hover' | 'click'>('closed');
   const popoverId = useId();
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const panelRef = useRef<HTMLSpanElement>(null);
+  const tooltipId = `${popoverId}-tooltip`;
+  const isTooltipOpen = openMode === 'hover';
+  const isModalOpen = openMode === 'click';
 
   useEffect(() => {
     const handleCloseOtherPopovers = (event: Event) => {
       const customEvent = event as CustomEvent<{ sourceId?: string }>;
       if (customEvent.detail?.sourceId !== popoverId) {
-        setOpen(false);
+        setOpenMode('closed');
       }
     };
 
@@ -29,7 +32,7 @@ export function HelpPopover({ label, title, children }: HelpPopoverProps) {
   }, [popoverId]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!isModalOpen) return;
 
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
@@ -37,13 +40,13 @@ export function HelpPopover({ label, title, children }: HelpPopoverProps) {
       const clickedPanel = panelRef.current?.contains(target);
 
       if (!clickedTrigger && !clickedPanel) {
-        setOpen(false);
+        setOpenMode('closed');
       }
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setOpen(false);
+        setOpenMode('closed');
       }
     };
 
@@ -54,14 +57,14 @@ export function HelpPopover({ label, title, children }: HelpPopoverProps) {
       document.removeEventListener('pointerdown', handlePointerDown);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open]);
+  }, [isModalOpen]);
 
-  const panel = open ? (
+  const modalPanel = isModalOpen ? (
     <>
       <span
         className="help-popover__scrim"
         aria-hidden="true"
-        onPointerDown={() => setOpen(false)}
+        onPointerDown={() => setOpenMode('closed')}
       />
       <span
         ref={panelRef}
@@ -77,7 +80,7 @@ export function HelpPopover({ label, title, children }: HelpPopoverProps) {
             type="button"
             className="help-popover__close"
             aria-label="Tutup penjelasan"
-            onClick={() => setOpen(false)}
+            onClick={() => setOpenMode('closed')}
           >
             <X size={16} aria-hidden="true" />
           </button>
@@ -86,7 +89,7 @@ export function HelpPopover({ label, title, children }: HelpPopoverProps) {
         <button
           type="button"
           className="help-popover__mobile-close"
-          onClick={() => setOpen(false)}
+          onClick={() => setOpenMode('closed')}
         >
           Tutup
         </button>
@@ -94,31 +97,55 @@ export function HelpPopover({ label, title, children }: HelpPopoverProps) {
     </>
   ) : null;
 
+  const tooltip = isTooltipOpen ? (
+    <span
+      id={tooltipId}
+      role="tooltip"
+      className="help-popover__tooltip"
+    >
+      {children}
+    </span>
+  ) : null;
+
   return (
-    <span ref={wrapperRef} className="help-popover">
+    <span
+      ref={wrapperRef}
+      className="help-popover"
+      onMouseLeave={() => {
+        if (openMode === 'hover') setOpenMode('closed');
+      }}
+      onBlur={(event) => {
+        if (openMode !== 'hover') return;
+        if (!wrapperRef.current?.contains(event.relatedTarget as Node | null)) {
+          setOpenMode('closed');
+        }
+      }}
+    >
       <button
         type="button"
         className="help-popover__trigger"
         aria-label={label}
-        aria-expanded={open}
-        aria-controls={open ? popoverId : undefined}
+        aria-expanded={isModalOpen}
+        aria-controls={isModalOpen ? popoverId : undefined}
+        aria-describedby={isTooltipOpen ? tooltipId : undefined}
         onMouseEnter={() => {
           window.dispatchEvent(new CustomEvent('sigap-close-help-popovers', { detail: { sourceId: popoverId } }));
-          setOpen(true);
+          setOpenMode((current) => (current === 'click' ? current : 'hover'));
         }}
         onFocus={() => {
           window.dispatchEvent(new CustomEvent('sigap-close-help-popovers', { detail: { sourceId: popoverId } }));
-          setOpen(true);
+          setOpenMode((current) => (current === 'click' ? current : 'hover'));
         }}
         onClick={() => {
           window.dispatchEvent(new CustomEvent('sigap-close-help-popovers', { detail: { sourceId: popoverId } }));
-          setOpen((current) => !current);
+          setOpenMode((current) => (current === 'click' ? 'closed' : 'click'));
         }}
       >
         <HelpCircle size={18} aria-hidden="true" />
       </button>
 
-      {panel ? createPortal(panel, document.body) : null}
+      {tooltip}
+      {modalPanel ? createPortal(modalPanel, document.body) : null}
     </span>
   );
 }

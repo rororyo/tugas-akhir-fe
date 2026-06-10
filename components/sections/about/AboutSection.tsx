@@ -25,9 +25,9 @@ export function AboutSection() {
     <section
       id="about"
       ref={ref}
+      className="about-section"
       style={{
         backgroundColor: '#ffffff',
-        padding: '120px 80px',
         fontFamily: "'Inter', sans-serif",
       }}
     >
@@ -35,6 +35,9 @@ export function AboutSection() {
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(30px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        .about-section {
+          padding: 120px 80px;
         }
         .reveal-item {
           opacity: 0;
@@ -58,11 +61,38 @@ export function AboutSection() {
         .about-card:hover .icon-wrapper {
           transform: scale(1.1) rotate(5deg);
         }
+        .about-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 32px;
+          margin-top: 80px;
+        }
+        @media (max-width: 768px) {
+          .about-section {
+            padding: 88px 20px;
+          }
+          .about-title {
+            font-size: 34px !important;
+            margin-bottom: 16px !important;
+          }
+          .about-description {
+            font-size: 17px !important;
+          }
+          .about-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-top: 48px;
+          }
+          .about-card {
+            padding: 32px 24px 28px !important;
+          }
+        }
       `}</style>
 
       {/* Title */}
       <div style={{ textAlign: 'center', marginBottom: '16px' }} className={`reveal-item ${isVisible ? 'visible' : ''}`}>
         <h2
+          className="about-title"
           style={{
             fontSize: '48px',
             fontWeight: '800',
@@ -74,6 +104,7 @@ export function AboutSection() {
           Tentang SIGAP
         </h2>
         <p
+          className="about-description"
           style={{
             fontSize: '20px',
             color: '#374151',
@@ -91,12 +122,7 @@ export function AboutSection() {
 
       {/* Cards */}
       <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '32px',
-          marginTop: '80px',
-        }}
+        className="about-grid"
       >
         {cards.map((card, i) => (
           <div

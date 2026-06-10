@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   BookOpen,
@@ -16,6 +16,7 @@ import { DETECTION_FEATURES, MERCHANT_CATEGORIES, CHANNELS, COUNTRIES } from '@/
 import type { InputMethod, SelectedFeatures, FormData } from '@/types';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { HelpPopover } from '@/components/ui/HelpPopover';
+import { useToast } from '@/components/ui/ToastProvider';
 
 interface DetectionSectionProps {
   inputMethod: InputMethod;
@@ -47,7 +48,12 @@ const inputStyle = {
 
 const selectStyle = {
   ...inputStyle,
-  paddingRight: '42px',
+  paddingRight: '48px',
+  appearance: 'none' as const,
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%231f2937' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 14px center',
+  backgroundSize: '18px 18px',
 };
 
 const labelStyle = {
@@ -272,7 +278,7 @@ function FieldLabel({
           {help.text}
         </HelpPopover>
       </span>
-      <p id={`${id}-help`} style={helperTextStyle}>{help.helper}</p>
+      <p id={`${id}-help`} className="manual-field__helper" style={helperTextStyle}>{help.helper}</p>
     </>
   );
 }
@@ -323,7 +329,7 @@ function GuideModal({ open, mode, onClose }: { open: boolean; mode: InputMethod;
             <p>
               {mode === 'file'
                 ? 'Unduh template, isi daftar pesanan sesuai kolom yang tersedia, lalu unggah file CSV atau XLSX.'
-                : 'Isi seperti saat memeriksa pesanan di marketplace: total pesanan, kategori toko, pembeli, pembayaran, keamanan, dan pengiriman.'}
+                : 'Isi seperti saat memeriksa pesanan di marketplace: total pesanan, kategori toko, pembeli, pembayaran, keamanan, dan pengiriman. Lalu, tekan tombol "Mulai Deteksi" di bagian bawah formulir untuk melihat hasil prediksi risiko.'}
             </p>
           </section>
           {mode === 'file' && (
@@ -340,8 +346,16 @@ function GuideModal({ open, mode, onClose }: { open: boolean; mode: InputMethod;
             <p>Pada informasi keamanan, pilihan &quot;Ya&quot; biasanya berarti pengecekan terpenuhi, sedangkan &quot;Tidak&quot; berarti belum terpenuhi atau perlu dicek ulang.</p>
           </section>
           <section>
+            <h4>Jika bingung dengan istilah</h4>
+            <p>Jika Anda belum yakin bagian atau kolom tertentu, klik ikon bantuan (?) di samping judul bagian/kolom.  Ikon ini berisi penjelasan singkat tentang bagian/kolom tersebut.</p>
+          </section>
+          <section>
             <h4>Catatan hasil AI</h4>
             <p>Hasil deteksi adalah bantuan awal. Tetap periksa ulang alamat, pembayaran, dan pola pesanan sebelum mengambil keputusan.</p>
+          </section>
+          <section>
+            <h4>Melihat dan mengunduh hasil</h4>
+            <p>Setelah proses deteksi selesai, hasil dapat dilihat langsung pada halaman hasil deteksi dan juga diunduh dalam format CSV atau XLSX sesuai kebutuhan.</p>
           </section>
         </div>
         <button type="button" className="guide-modal__close" onClick={onClose}>Tutup</button>
@@ -360,11 +374,14 @@ export function DetectionSection({
   isLoading,
 }: DetectionSectionProps) {
   const { ref, isVisible } = useScrollReveal(0.1);
+  const { toast } = useToast();
   const selectedCount = Object.values(selectedFeatures).filter(Boolean).length;
   const totalCount = Object.keys(selectedFeatures).length;
-  const isDetectDisabled = isLoading || (inputMethod === 'file' && (!parsedData || parsedData.length === 0));
+  const isFormIncomplete = inputMethod === 'form' && (!formData.amount || !formData.merchant_category);
+  const isDetectDisabled = isLoading || isFormIncomplete || (inputMethod === 'file' && (!parsedData || parsedData.length === 0));
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const detailSectionRef = useRef<HTMLDivElement>(null);
 
   const featureKeys = Object.keys(selectedFeatures) as (keyof SelectedFeatures)[];
   const col1 = featureKeys.slice(0, Math.ceil(featureKeys.length / 3));
@@ -382,11 +399,45 @@ export function DetectionSection({
     }
   };
 
+  const scrollToDetailSection = () => {
+    if (!detailSectionRef.current) return;
+
+    const stickyOffset = window.innerWidth <= 900 ? 164 : 108;
+    const top = detailSectionRef.current.getBoundingClientRect().top + window.pageYOffset - stickyOffset;
+
+    window.scrollTo({
+      top: Math.max(top, 0),
+      behavior: 'smooth',
+    });
+  };
+
   const fillExample = () => {
+    const alreadyFilled = (Object.entries(EXAMPLE_TRANSACTION) as [keyof FormData, string][])
+      .every(([field, value]) => formData[field] === value);
+
     (Object.entries(EXAMPLE_TRANSACTION) as [keyof FormData, string][]).forEach(([field, value]) => {
       onFormChange(field, value);
     });
     setFormErrors({});
+
+    window.requestAnimationFrame(() => {
+      scrollToDetailSection();
+    });
+
+    if (alreadyFilled) {
+      toast({
+        type: 'info',
+        title: 'Pesanan sudah diisi dengan nilai contoh',
+        description: 'Form contoh tetap ditampilkan dan halaman diarahkan ke Detail Transaksi.',
+      });
+      return;
+    }
+
+    toast({
+      type: 'success',
+      title: 'Isi contoh pesanan berhasil',
+      description: 'Form diisi otomatis dengan data contoh dan diarahkan ke Detail Transaksi.',
+    });
   };
 
   const validateManualForm = () => {
@@ -486,6 +537,7 @@ export function DetectionSection({
         .manual-card { background: #ffffff; border-radius: 24px; padding: 40px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .manual-topbar { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 20px; }
         .manual-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+        .manual-actions-sticky { position: static; }
         .manual-secondary-button, .manual-guide-button {
           min-height: 44px;
           border-radius: 12px;
@@ -550,6 +602,7 @@ export function DetectionSection({
         .manual-section__content { padding: 20px; }
         .manual-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
         .manual-field { min-width: 0; }
+        .manual-field__helper { min-height: 3.2em; }
         .manual-label-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
         .seller-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
         .seller-badge {
@@ -598,6 +651,32 @@ export function DetectionSection({
           cursor: pointer;
         }
         .help-popover__trigger:hover, .help-popover__trigger:focus-visible { background: #f1f5f9; color: #2563eb; outline: none; }
+        .help-popover__tooltip {
+          position: absolute;
+          top: calc(100% + 8px);
+          right: 0;
+          width: min(280px, calc(100vw - 48px));
+          padding: 10px 12px;
+          background: #0f172a;
+          color: #f8fafc;
+          border-radius: 10px;
+          box-shadow: 0 16px 32px rgba(15, 23, 42, 0.2);
+          font-size: 12px;
+          line-height: 1.5;
+          z-index: 50;
+          white-space: normal;
+        }
+        .help-popover__tooltip::before {
+          content: '';
+          position: absolute;
+          top: -6px;
+          right: 14px;
+          width: 12px;
+          height: 12px;
+          background: #0f172a;
+          transform: rotate(45deg);
+          border-radius: 2px;
+        }
         .help-popover__panel {
           position: fixed;
           top: 50%;
@@ -712,11 +791,21 @@ export function DetectionSection({
           .manual-card { width: 100%; max-width: 100%; }
           .manual-card { padding: 20px; border-radius: 18px; }
           .manual-topbar { flex-direction: column; }
+          .manual-actions-sticky {
+            position: sticky;
+            top: 76px;
+            z-index: 25;
+            width: 100%;
+            margin: -4px 0 12px;
+            padding: 10px 0 0;
+            background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 78%, rgba(255,255,255,0) 100%);
+          }
           .manual-actions { width: 100%; justify-content: stretch; }
           .manual-secondary-button, .manual-guide-button { width: 100%; }
           .manual-steps { grid-template-columns: 1fr; gap: 8px; }
           .manual-step { padding: 9px 10px; }
           .manual-grid { grid-template-columns: 1fr; }
+          .manual-field__helper { min-height: 0; }
           .order-summary__grid { grid-template-columns: 1fr; }
           .manual-section__content { padding: 16px; }
           .help-popover__panel {
@@ -735,6 +824,16 @@ export function DetectionSection({
             box-shadow: 0 20px 45px rgba(15, 23, 42, 0.24);
             z-index: 90;
           }
+          .help-popover__tooltip {
+            right: auto;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(260px, calc(100vw - 32px));
+          }
+          .help-popover__tooltip::before {
+            right: auto;
+            left: calc(50% - 6px);
+          }
           .help-popover__body { color: #475569; }
           .help-popover__close { background: #f1f5f9; color: #334155; }
           .help-popover__mobile-close {
@@ -751,17 +850,17 @@ export function DetectionSection({
             font-weight: 800;
           }
           .manual-action-sticky {
-            position: fixed;
-            left: 0;
-            right: 0;
+            position: sticky;
+            bottom: 12px;
+            z-index: 30;
             width: 100%;
             max-width: 100vw !important;
-            bottom: 0;
-            z-index: 60;
             background: rgba(255, 255, 255, 0.96);
-            border-top: 1px solid #e2e8f0;
-            padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
-            box-shadow: 0 -10px 30px rgba(15, 23, 42, 0.10);
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            border-radius: 18px;
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
+            backdrop-filter: blur(10px);
           }
           .manual-action-sticky .detect-button { border-radius: 12px !important; padding: 16px !important; font-size: 16px !important; }
           .guide-modal { align-items: center; justify-content: center; padding: 16px; }
@@ -825,10 +924,12 @@ export function DetectionSection({
                 <h3 style={{ fontSize: '24px', fontWeight: '800', color: '#111827', margin: '0 0 6px' }}>Cek Banyak Pesanan</h3>
                 <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>Unggah file pesanan marketplace untuk mengecek beberapa transaksi sekaligus.</p>
               </div>
-              <div className="manual-actions">
-                <button type="button" className="manual-guide-button" onClick={() => setIsGuideOpen(true)}>
-                  <BookOpen size={18} aria-hidden="true" /> Lihat Panduan Singkat
-                </button>
+              <div className="manual-actions-sticky">
+                <div className="manual-actions">
+                  <button type="button" className="manual-guide-button" onClick={() => setIsGuideOpen(true)}>
+                    <BookOpen size={18} aria-hidden="true" /> Lihat Panduan Singkat
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -966,13 +1067,15 @@ export function DetectionSection({
                 <h3 style={{ fontSize: '24px', fontWeight: '800', color: '#111827', margin: '0 0 6px' }}>Cek Risiko Pesanan</h3>
                 <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>Masukkan data seperti saat Anda memeriksa pesanan di dashboard marketplace.</p>
               </div>
-              <div className="manual-actions">
-                <button type="button" className="manual-guide-button" onClick={() => setIsGuideOpen(true)}>
-                  <BookOpen size={18} aria-hidden="true" /> Lihat Panduan Singkat
-                </button>
-                <button type="button" className="manual-secondary-button" onClick={fillExample}>
-                  <Sparkles size={18} aria-hidden="true" /> Isi Contoh Pesanan
-                </button>
+              <div className="manual-actions-sticky">
+                <div className="manual-actions">
+                  <button type="button" className="manual-guide-button" onClick={() => setIsGuideOpen(true)}>
+                    <BookOpen size={18} aria-hidden="true" /> Lihat Panduan Singkat
+                  </button>
+                  <button type="button" className="manual-secondary-button" onClick={fillExample}>
+                    <Sparkles size={18} aria-hidden="true" /> Isi Contoh Pesanan
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -983,7 +1086,6 @@ export function DetectionSection({
 
             <div className="seller-badges" aria-label="Contoh status risiko">
               <span className="seller-badge seller-badge--safe">Aman</span>
-              <span className="seller-badge seller-badge--check">Perlu Dicek</span>
               <span className="seller-badge seller-badge--risk">Berisiko</span>
             </div>
 
@@ -994,7 +1096,7 @@ export function DetectionSection({
             </div>
 
             <div style={{ paddingBottom: '24px' }}>
-              <div className="manual-section">
+              <div className="manual-section" ref={detailSectionRef}>
                 <div className="manual-section__header">Detail Transaksi</div>
                 <div className="manual-section__content">
                   <div className="manual-grid">
@@ -1058,7 +1160,7 @@ export function DetectionSection({
                           <label htmlFor={field} style={labelStyle}>{label}</label>
                           <HelpPopover label={helpLabel} title={helpTitle}>{help}</HelpPopover>
                         </span>
-                        <p id={`${field}-help`} style={helperTextStyle}>{helper}</p>
+                        <p id={`${field}-help`} className="manual-field__helper" style={helperTextStyle}>{helper}</p>
                         <select id={field} value={formData[field]} onChange={e => updateForm(field, e.target.value)} style={selectStyle} aria-describedby={describedBy(field)}>
                           {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                         </select>
@@ -1097,7 +1199,7 @@ export function DetectionSection({
                           <label htmlFor={field} style={labelStyle}>{label}</label>
                           <HelpPopover label={helpLabel} title={helpTitle}>{help}</HelpPopover>
                         </span>
-                        <p id={`${field}-help`} style={helperTextStyle}>{helper}</p>
+                        <p id={`${field}-help`} className="manual-field__helper" style={helperTextStyle}>{helper}</p>
                         <select id={field} value={formData[field]} onChange={e => updateForm(field, e.target.value)} style={selectStyle} aria-describedby={describedBy(field)}>
                           {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                         </select>
@@ -1111,7 +1213,7 @@ export function DetectionSection({
             <div className="order-summary" aria-label="Ringkasan pesanan sebelum cek risiko">
               <div className="order-summary__header">
                 <p className="order-summary__title">Ringkasan Pesanan</p>
-                <span className="seller-badge seller-badge--check">Cek sebelum proses</span>
+                <span className="seller-badge seller-badge--safe">Cek sebelum proses</span>
               </div>
               <div className="order-summary__grid">
                 {orderSummary.map((item) => (
@@ -1122,42 +1224,76 @@ export function DetectionSection({
                 ))}
               </div>
             </div>
+
+            <div className={`manual-action-sticky animate-section ${isVisible ? 'visible' : ''}`} style={{ marginTop: '16px', animationDelay: '0.4s' }}>
+              <button
+                type="button"
+                onClick={handleDetectClick}
+                disabled={isDetectDisabled}
+                className="detect-button"
+                style={{
+                  width: '100%',
+                  backgroundColor: '#16a34a',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '16px',
+                  padding: '24px',
+                  fontSize: '20px',
+                  fontWeight: '800',
+                  cursor: isDetectDisabled ? 'not-allowed' : 'pointer',
+                  opacity: isDetectDisabled ? 0.6 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '14px',
+                  fontFamily: "'Inter', sans-serif",
+                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                }}
+              >
+                {isLoading
+                  ? <><Loader2 size={24} style={{ animation: 'spin 1s linear infinite' }} />Memproses Data...</>
+                  : <><Search size={24} />Mulai Deteksi</>
+                }
+              </button>
+            </div>
           </div>
           <GuideModal open={isGuideOpen} mode="form" onClose={() => setIsGuideOpen(false)} />
         </div>
       )}
 
-      <div className={`animate-section ${inputMethod === 'form' ? 'manual-action-sticky' : ''} ${isVisible ? 'visible' : ''}`} style={{ maxWidth: inputMethod === 'form' ? '980px' : '980px', margin: '0 auto', animationDelay: '0.4s' }}>
-        <button
-          type="button"
-          onClick={handleDetectClick}
-          disabled={isDetectDisabled}
-          className="detect-button"
-          style={{
-            width: '100%',
-            backgroundColor: '#16a34a',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '16px',
-            padding: '24px',
-            fontSize: '20px',
-            fontWeight: '800',
-            cursor: isDetectDisabled ? 'not-allowed' : 'pointer',
-            opacity: isDetectDisabled ? 0.6 : 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '14px',
-            fontFamily: "'Inter', sans-serif",
-            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
-          }}
-        >
-          {isLoading
-            ? <><Loader2 size={24} style={{ animation: 'spin 1s linear infinite' }} />Memproses Data...</>
-            : <><Search size={24} />Mulai Deteksi</>
-          }
-        </button>
-      </div>
+      {inputMethod === 'file' && (
+        <div className={`animate-section manual-action-sticky ${isVisible ? 'visible' : ''}`} style={{ maxWidth: '980px', margin: '0 auto', animationDelay: '0.4s' }}>
+          <button
+            type="button"
+            onClick={handleDetectClick}
+            disabled={isDetectDisabled}
+            className="detect-button"
+            style={{
+              width: '100%',
+              backgroundColor: '#16a34a',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '16px',
+              padding: '24px',
+              fontSize: '20px',
+              fontWeight: '800',
+              cursor: isDetectDisabled ? 'not-allowed' : 'pointer',
+              opacity: isDetectDisabled ? 0.6 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '14px',
+              fontFamily: "'Inter', sans-serif",
+              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+            }}
+          >
+            {isLoading
+              ? <><Loader2 size={24} style={{ animation: 'spin 1s linear infinite' }} />Memproses Data...</>
+              : <><Search size={24} />Mulai Deteksi</>
+            }
+          </button>
+        </div>
+      )}
     </section>
   );
 }
