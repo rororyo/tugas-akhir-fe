@@ -1,13 +1,6 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import "./globals.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "SIGAP Detection Service",
@@ -21,7 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
-      <body className={`${inter.variable} antialiased`} style={{ fontFamily: "'Inter', sans-serif", margin: 0 }}>
+      <body className="antialiased" style={{ fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif", margin: 0 }}>
         <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
