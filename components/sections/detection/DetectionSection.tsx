@@ -79,9 +79,20 @@ const errorTextStyle = {
   fontWeight: 600 as const,
 };
 
+const formatUsd = (value: string) => {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return 'Belum diisi';
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+};
+
 const EXAMPLE_TRANSACTION: FormData = {
   user_id: '240817',
-  amount: '249000',
+  amount: '249.00',
   merchant_category: 'fashion',
   channel: 'app',
   account_age_days: '428',
@@ -157,7 +168,7 @@ const FIELD_HELP = {
     helper: 'Total nilai pesanan yang dibayar pembeli, tanpa simbol mata uang.',
     title: 'Tentang Total Pesanan',
     label: 'Lihat penjelasan total pesanan',
-    text: 'Masukkan angka saja seperti saat melihat total pesanan di marketplace. Contoh: 249000.',
+    text: 'Masukkan angka USD saja tanpa simbol mata uang. Contoh: 249.00.',
   },
   merchant_category: {
     helper: 'Pilih kategori toko atau jenis produk yang dijual.',
@@ -206,7 +217,7 @@ const FIELD_HELP = {
 const UPLOAD_FEATURE_HELP: Record<keyof SelectedFeatures, { title: string; text: string }> = {
   amount: {
     title: 'Jumlah Transaksi (USD)',
-    text: 'Kolom wajib berisi total nilai pesanan dalam angka. Contoh: 249000 atau 84.75, sesuai format data yang Anda gunakan.',
+    text: 'Kolom wajib berisi total nilai pesanan dalam USD, tanpa simbol mata uang. Contoh: 249.00 atau 84.75.',
   },
   merchant_category: {
     title: 'Kategori Toko',
@@ -478,7 +489,7 @@ export function DetectionSection({
     SECURITY_FIELDS.find((item) => item.field === field)?.options.find((option) => option.value === formData[field])?.label || 'Belum dipilih'
   );
   const orderSummary = [
-    { label: 'Total Pesanan', value: formData.amount ? `Rp ${Number(formData.amount).toLocaleString('id-ID')}` : 'Belum diisi' },
+    { label: 'Total Pesanan', value: formData.amount ? formatUsd(formData.amount) : 'Belum diisi' },
     { label: 'Channel Penjualan', value: findOptionLabel(CHANNELS, formData.channel) },
     { label: 'Kategori Toko', value: findOptionLabel(MERCHANT_CATEGORIES, formData.merchant_category) },
     { label: 'Promo/Voucher', value: securitySummaryLabel('promo_used') },
@@ -1102,7 +1113,7 @@ export function DetectionSection({
                   <div className="manual-grid">
                     <div className="manual-field">
                       <FieldLabel id="amount" label="Total Pesanan" required help={FIELD_HELP.amount} />
-                      <input id="amount" type="number" step="1" value={formData.amount} onChange={e => updateForm('amount', e.target.value)} placeholder="Contoh: 249000" style={inputStyle} aria-invalid={!!formErrors.amount} aria-describedby={describedBy('amount')} />
+                      <input id="amount" type="number" step="0.01" value={formData.amount} onChange={e => updateForm('amount', e.target.value)} placeholder="Contoh: 249.00" style={inputStyle} aria-invalid={!!formErrors.amount} aria-describedby={describedBy('amount')} />
                       {renderError('amount')}
                     </div>
                     <div className="manual-field">
