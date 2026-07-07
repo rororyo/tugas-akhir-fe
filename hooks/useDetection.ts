@@ -167,16 +167,18 @@ export function useDetection() {
         });
       } else {
         // Singular form — POST to /api/predict/single
+        // Optional fields are only included when filled in; left blank ("Tidak tahu")
+        // they're omitted entirely so the backend applies its imputation defaults.
         const body: Transaction = {
-          transaction_time: formData.transaction_time || new Date().toISOString(),
           amount:            Number(formData.amount),
           merchant_category: formData.merchant_category,
-          channel:           formData.channel,
-          avs_match:         Number(formData.avs_match),
-          cvv_result:        Number(formData.cvv_result),
-          three_ds_flag:     Number(formData.three_ds_flag),
-          promo_used:        Number(formData.promo_used),
         };
+        if (formData.transaction_time)     body.transaction_time      = formData.transaction_time;
+        if (formData.channel)              body.channel               = formData.channel;
+        if (formData.avs_match)            body.avs_match             = Number(formData.avs_match);
+        if (formData.cvv_result)           body.cvv_result            = Number(formData.cvv_result);
+        if (formData.three_ds_flag)        body.three_ds_flag         = Number(formData.three_ds_flag);
+        if (formData.promo_used)           body.promo_used            = Number(formData.promo_used);
         if (formData.account_age_days)     body.account_age_days     = Number(formData.account_age_days);
         if (formData.shipping_distance_km) body.shipping_distance_km = Number(formData.shipping_distance_km);
         if (formData.country)              body.country               = formData.country;
@@ -465,6 +467,11 @@ function _singleToDetectionResult(single: SingleResult): DetectionResult {
     is_fraud:          single.is_fraud,
     fraud_probability: single.fraud_probability,
   };
+  // Backend tracks the auto-generated user_id separately from imputed_fields —
+  // fold it in here so the "auto-completed data" summary reflects it too.
+  const imputedFields = single.assigned_user_id
+    ? ['user_id', ...(single.imputed_fields ?? [])]
+    : (single.imputed_fields ?? []);
   return {
     predictions:   [pred],
     skipped:       [],
@@ -474,7 +481,7 @@ function _singleToDetectionResult(single: SingleResult): DetectionResult {
       fraud_rate: single.is_fraud ? 1 : 0,
     },
     model_info:       { model_name: single.model_used, f1: 0 },
-    imputed_fields:   single.imputed_fields ?? [],
+    imputed_fields:   imputedFields,
     warning:          single.warning ?? null,
     model_used:       single.model_used,
     threshold:        single.threshold,

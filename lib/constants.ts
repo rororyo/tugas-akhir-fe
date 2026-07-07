@@ -25,14 +25,14 @@ export const MERCHANT_CATEGORIES = [
 ] as const;
 
 export const CHANNELS = [
-  { value: '',    label: 'Pilih Channel Penjualan' },
+  { value: '',    label: 'Tidak tahu' },
   { value: 'web', label: 'Marketplace via Website' },
   { value: 'app', label: 'Aplikasi Marketplace' },
 ] as const;
 
 // country / bin_country values from training dataset
 export const COUNTRIES = [
-  { value: '',   label: 'Pilih Negara' },
+  { value: '',   label: 'Tidak tahu' },
   { value: 'US', label: 'Amerika Serikat (US)' },
   { value: 'GB', label: 'Inggris (GB)' },
   { value: 'FR', label: 'Prancis (FR)' },

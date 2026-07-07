@@ -115,6 +115,7 @@ const SECURITY_FIELDS = [
     helpLabel: 'Lihat penjelasan kecocokan alamat pembayaran',
     help: 'AVS adalah pengecekan alamat pembayaran dengan data bank. Untuk seller, anggap ini seperti tanda apakah alamat pembayaran terlihat sesuai.',
     options: [
+      { value: '',  label: 'Tidak tahu' },
       { value: '1', label: 'Alamat cocok' },
       { value: '0', label: 'Alamat tidak cocok' },
     ],
@@ -127,6 +128,7 @@ const SECURITY_FIELDS = [
     helpLabel: 'Lihat penjelasan kode keamanan kartu',
     help: 'CVV adalah kode keamanan pada kartu. Jika tidak valid, pembayaran sebaiknya ditinjau ulang sebelum pesanan diproses.',
     options: [
+      { value: '',  label: 'Tidak tahu' },
       { value: '1', label: 'Valid' },
       { value: '0', label: 'Tidak valid' },
     ],
@@ -139,6 +141,7 @@ const SECURITY_FIELDS = [
     helpLabel: 'Lihat penjelasan verifikasi tambahan OTP',
     help: '3DS adalah verifikasi tambahan dari bank, misalnya OTP atau persetujuan aplikasi. Jika tidak ada OTP, pesanan tetap bisa sah tetapi perlu dilihat bersama sinyal lain.',
     options: [
+      { value: '',  label: 'Tidak tahu' },
       { value: '1', label: 'Ya, menggunakan 3DS/OTP' },
       { value: '0', label: 'Tidak menggunakan 3DS/OTP' },
     ],
@@ -151,6 +154,7 @@ const SECURITY_FIELDS = [
     helpLabel: 'Lihat penjelasan promo atau voucher',
     help: 'Promo mencakup voucher toko, diskon platform, kupon, atau gratis ongkir. Pilih ya jika potongan harga benar-benar digunakan.',
     options: [
+      { value: '',  label: 'Tidak tahu' },
       { value: '1', label: 'Ya, menggunakan promo/voucher' },
       { value: '0', label: 'Tidak menggunakan promo/voucher' },
     ],
@@ -1160,6 +1164,12 @@ export function DetectionSection({
                       {renderError('channel')}
                     </div>
                     <div className="manual-field">
+                      <FieldLabel id="country" label="Lokasi Transaksi (Negara)" help={FIELD_HELP.country} />
+                      <select id="country" value={formData.country} onChange={e => updateForm('country', e.target.value)} style={selectStyle} aria-describedby={describedBy('country')}>
+                        {COUNTRIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                      </select>
+                    </div>
+                    <div className="manual-field">
                       <FieldLabel id="bin_country" label="Negara Asal Kartu (BIN)" help={FIELD_HELP.bin_country} />
                       <select id="bin_country" value={formData.bin_country} onChange={e => updateForm('bin_country', e.target.value)} style={selectStyle} aria-describedby={describedBy('bin_country')}>
                         {COUNTRIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
@@ -1189,12 +1199,6 @@ export function DetectionSection({
                       <FieldLabel id="shipping_distance_km" label="Jarak Pengiriman (km)" help={FIELD_HELP.shipping_distance_km} />
                       <input id="shipping_distance_km" type="number" min={0} step="0.1" value={formData.shipping_distance_km} onChange={e => updateForm('shipping_distance_km', e.target.value)} placeholder="Contoh: 18.5" style={inputStyle} aria-invalid={!!formErrors.shipping_distance_km} aria-describedby={describedBy('shipping_distance_km')} />
                       {renderError('shipping_distance_km')}
-                    </div>
-                    <div className="manual-field">
-                      <FieldLabel id="country" label="Lokasi Transaksi" help={FIELD_HELP.country} />
-                      <select id="country" value={formData.country} onChange={e => updateForm('country', e.target.value)} style={selectStyle} aria-describedby={describedBy('country')}>
-                        {COUNTRIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                      </select>
                     </div>
                   </div>
                 </div>
